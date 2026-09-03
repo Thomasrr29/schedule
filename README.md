@@ -20,6 +20,7 @@ npm run dev
 | `npm run check` | Casos borde del motor de cruce, sin base de datos |
 | `npx prisma migrate dev` | Aplica cambios del schema |
 | `npx prisma studio` | Ver y editar la base a mano (aquí se resetean PINs) |
+| `npx tsx --env-file=.env scripts/demo.ts <carnet>` | Siembra una amiga de prueba con horario que cruza con el tuyo (`--limpiar` la borra) |
 
 ## Detalles de Prisma 7
 
@@ -36,13 +37,17 @@ No es como la v6. Tres cosas que rompen si se olvidan:
 
 ```
 lib/
-  matching.ts   ventanas de presencia + solape + clasificación   <- el corazón
-  time.ts       intervalos en minutos, "ahora" en America/Bogota
-  auth.ts       cookie de sesión, PIN, bloqueo por intentos
-  claude.ts     lee la foto del horario
-  config.ts     márgenes, semestre activo, zona horaria
-  db.ts         cliente Prisma con adapter
+  matching.ts       ventanas de presencia + solape + clasificación   <- el corazón
+  coincidencias.ts  arma el cruce contra todos tus amigos, en una query
+  time.ts           intervalos en minutos, "ahora" en America/Bogota
+  auth.ts           cookie de sesión, PIN, bloqueo por intentos
+  validar.ts        lo único por donde entra un bloque a la base
+  amigos.ts         resuelve los dos lados de una amistad
+  claude.ts         lee la foto del horario
+  config.ts         márgenes, semestre activo, zona horaria
+  db.ts             cliente Prisma con adapter
 scripts/check-matching.ts   los casos borde del cruce
+scripts/demo.ts             amiga de prueba
 ```
 
 ## Decisiones que no son obvias
@@ -55,5 +60,8 @@ scripts/check-matching.ts   los casos borde del cruce
 - **Nada se precalcula.** Con 20 bloques por persona cruzar en memoria es
   instantáneo, y si un amigo corrige su horario tu siguiente carga ya lo ve.
 - **La foto nunca se guarda**, solo los bloques que el usuario confirmó.
+- **El dashboard es la semana, no el ahora.** Sin notificaciones, una vista de
+  "quién está ahora" obliga a abrir la app en el momento justo. La semana se
+  consulta una vez y sirve; el "ahora mismo" es una sección adentro.
 - **No hay recuperación de PIN.** El reset es a mano en `prisma studio`. Con 8
   personas se aguanta, pero hay que avisarles al invitarlas.

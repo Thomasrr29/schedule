@@ -23,6 +23,16 @@ export const copy = {
     carnetMalo: "Ese carnet no parece un carnet",
     nombreVacio: "Escribí tu nombre",
   },
+  semana: {
+    ahora: "Ahora mismo",
+    titulo: "Tu semana",
+    sinHorario: "Cargá tu horario",
+    sinHorarioSub: "Sin él no hay con quién cruzarte",
+    sinAmigos: "Todavía no tenés parceros acá. Invitá a alguien",
+    sinNada: "Esta semana no se cruzan con nadie. Parche muerto",
+    largo: (dur: string, nombre: string) => `Tenés ${dur} con ${nombre}, parchen pues`,
+    corto: (nombre: string) => `Te cruzás con ${nombre}, saludá al menos`,
+  },
   horario: {
     titulo: "Tu horario",
     vacio: "Tirale una foto a tu horario",

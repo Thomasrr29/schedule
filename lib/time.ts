@@ -72,3 +72,12 @@ export function ahoraEnBogota(fecha: Date = new Date()): {
     minutos: Number(leer("hour")) * 60 + Number(leer("minute")),
   };
 }
+
+/** "45 minutos", "1 hora", "2 horas", "1h 30min" — lo que se dice en voz alta. */
+export function duracionHumana(minutos: number): string {
+  if (minutos < 60) return `${minutos} minutos`;
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  if (m === 0) return h === 1 ? "1 hora" : `${h} horas`;
+  return `${h}h ${m}min`;
+}

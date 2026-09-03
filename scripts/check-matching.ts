@@ -1,7 +1,7 @@
 /** Casos borde del motor de cruce. Corre sin base de datos: `npm run check`. */
 import assert from "node:assert/strict";
-import { calcularCoincidencias, type BloqueBase } from "@/lib/matching";
-import { restarIntervalos } from "@/lib/time";
+import { calcularCoincidencias, coincidenciasEnCurso, type BloqueBase } from "@/lib/matching";
+import { ahoraEnBogota, restarIntervalos } from "@/lib/time";
 
 const clase = (
   dia: BloqueBase["dia"],
@@ -97,4 +97,31 @@ test("restarIntervalos tolera cortes desordenados y solapados", () => {
   ]);
 });
 
-console.log(`\n${pasaron}/9 casos\n`);
+console.log("\nhora local y modo ahora\n");
+
+test("el server corre en UTC pero el dia es el de Medellin", () => {
+  // 03/sep 02:00 UTC son las 21:00 del 02/sep en Bogota. Con el getDay() del
+  // server esto diria jueves, y el dashboard cambiaria de dia a las 7pm.
+  const t = ahoraEnBogota(new Date("2026-09-03T02:00:00Z"));
+  assert.equal(t.dia, "mie");
+  assert.equal(t.minutos, 21 * 60);
+});
+
+test("domingo no es dia de U", () => {
+  assert.equal(ahoraEnBogota(new Date("2026-09-06T15:00:00Z")).dia, null);
+});
+
+test("ahora solo deja lo que esta pasando en este momento", () => {
+  const c = calcularCoincidencias(
+    [clase("mie", "12:00", "16:00", "ROBLEDO", "DISPONIBLE")],
+    [clase("mie", "14:00", "16:00")],
+  );
+  assert.equal(c.length, 1); // ventana 13:45-16:30
+  assert.equal(coincidenciasEnCurso(c, "mie", 14 * 60).length, 1); // adentro
+  assert.equal(coincidenciasEnCurso(c, "mie", 13 * 60 + 30).length, 0); // antes
+  assert.equal(coincidenciasEnCurso(c, "mie", 16 * 60 + 30).length, 0); // el fin no cuenta
+  assert.equal(coincidenciasEnCurso(c, "jue", 14 * 60).length, 0); // otro dia
+  assert.equal(coincidenciasEnCurso(c, null, 14 * 60).length, 0); // domingo
+});
+
+console.log(`\n${pasaron} casos, ${process.exitCode ? "con fallos" : "todos bien"}\n`);
