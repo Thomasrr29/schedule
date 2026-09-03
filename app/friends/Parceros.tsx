@@ -12,6 +12,9 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
   const [copiado, setCopiado] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [ocupado, setOcupado] = useState(false);
+  // Uno solo a la vez: abrir la confirmacion de otro cierra la anterior, asi
+  // no quedan dos filas preguntando lo mismo.
+  const [porQuitar, setPorQuitar] = useState<string | null>(null);
 
   async function compartir() {
     // En el celular esto abre WhatsApp directo, que es donde va a terminar
@@ -41,6 +44,7 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
   async function quitar(id: string) {
     setOcupado(true);
     await fetch(`/api/friendships/${id}`, { method: "DELETE" });
+    setPorQuitar(null);
     setOcupado(false);
     router.refresh();
   }
@@ -68,18 +72,44 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
           amigos.map((f, i) => (
             <div
               key={f.id}
-              className={`flex items-center gap-3 rounded-2xl border-2 border-ink p-3 ${
+              className={`rounded-2xl border-2 border-ink p-3 ${
                 i % 2 === 0 ? "bg-mint" : "bg-lavender"
               }`}
             >
-              <p className="flex-1 font-display font-semibold">{f.amigo.name}</p>
-              <button
-                onClick={() => quitar(f.id)}
-                disabled={ocupado}
-                className="rounded-full border-2 border-ink px-3 py-1 text-xs disabled:opacity-60"
-              >
-                {copy.parceros.quitar}
-              </button>
+              <div className="flex items-center gap-3">
+                <p className="flex-1 font-display font-semibold">{f.amigo.name}</p>
+                {porQuitar !== f.id && (
+                  <button
+                    onClick={() => setPorQuitar(f.id)}
+                    disabled={ocupado}
+                    className="rounded-full border-2 border-ink px-3 py-1 text-xs disabled:opacity-60"
+                  >
+                    {copy.parceros.quitar}
+                  </button>
+                )}
+              </div>
+
+              {porQuitar === f.id && (
+                <div className="mt-2 border-t-2 border-ink/15 pt-2">
+                  <p className="text-xs">{copy.parceros.quitarAviso}</p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <button
+                      onClick={() => quitar(f.id)}
+                      disabled={ocupado}
+                      className="rounded-full border-2 border-ink bg-ink px-3 py-1 text-xs font-semibold text-cream disabled:opacity-60"
+                    >
+                      {copy.parceros.quitar}
+                    </button>
+                    <button
+                      onClick={() => setPorQuitar(null)}
+                      disabled={ocupado}
+                      className="text-xs underline disabled:opacity-60"
+                    >
+                      {copy.parceros.mejorNo}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -95,7 +125,7 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
         </button>
         {confirmando && (
           <button onClick={() => setConfirmando(false)} className="block text-sm underline">
-            Mejor no
+            {copy.parceros.mejorNo}
           </button>
         )}
       </div>

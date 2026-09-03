@@ -4,11 +4,11 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { TERM_ACTUAL } from "@/lib/config";
 import { coincidenciasDe } from "@/lib/coincidencias";
-import { ahoraEnBogota, aMinutos, duracionHumana } from "@/lib/time";
+import { ahoraEnBogota, aMinutos } from "@/lib/time";
 import { copy } from "@/lib/copy";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { BottomNav } from "@/components/ui/BottomNav";
-import type { Dia } from "@/lib/generated/prisma/enums";
+import { SemanaPorDia, type TarjetaAmigo } from "@/components/SemanaPorDia";
 
 const DIAS = ["lun", "mar", "mie", "jue", "vie", "sab"] as const;
 
@@ -25,6 +25,52 @@ export default async function Home() {
   // y agrupada por amigo esa respuesta hay que armarla en la cabeza.
   const filas = porAmigo.flatMap(({ amigo, coincidencias }) =>
     coincidencias.map((c) => ({ amigo, ...c })),
+  );
+
+  // El cliente recibe datos planos, no el objeto de Prisma: solo lo que la
+  // tarjeta pinta. Todos los dias van, incluso los vacios — la pregunta
+  // "¿quien cae el jueves?" tiene respuesta aunque sea "nadie".
+  //
+  // Y una tarjeta por persona, no por encuentro: si Juanchito cae en la mañana
+  // en Fraternidad y en la noche en Robledo, sueltas parecen dos personas.
+  const porDia: Record<string, TarjetaAmigo[]> = Object.fromEntries(
+    DIAS.map((d) => {
+      const tarjetas = new Map<string, TarjetaAmigo>();
+
+      for (const f of filas.filter((x) => x.dia === d)) {
+        const franja = {
+          sede: f.sede.nombre,
+          desde: f.amigoEnSede.inicio,
+          hasta: f.amigoEnSede.fin,
+          // El tramo libre es el rato de verdad aprovechable; cuando no hay,
+          // el solape pelado es lo unico que se puede ofrecer.
+          coincide:
+            f.tipo === "largo" && f.tramoLibre
+              ? { inicio: f.tramoLibre.inicio, fin: f.tramoLibre.fin }
+              : { inicio: f.inicio, fin: f.fin },
+          tipo: f.tipo,
+        };
+
+        const ya = tarjetas.get(f.amigo.id);
+        if (ya) {
+          ya.franjas.push(franja);
+          // Basta una franja larga para que la tarjeta entera valga la pena.
+          if (f.tipo === "largo") ya.tipo = "largo";
+        } else {
+          tarjetas.set(f.amigo.id, {
+            amigoId: f.amigo.id,
+            amigo: f.amigo.name,
+            tipo: f.tipo,
+            franjas: [franja],
+          });
+        }
+      }
+
+      for (const t of tarjetas.values()) {
+        t.franjas.sort((a, b) => a.desde.localeCompare(b.desde));
+      }
+      return [d, [...tarjetas.values()]];
+    }),
   );
 
   const { dia: hoy, minutos } = ahoraEnBogota();
@@ -64,37 +110,9 @@ export default async function Home() {
               </section>
             )}
 
-            <section className="space-y-4">
+            <section className="space-y-3">
               <h2 className="font-display text-lg font-semibold">{copy.semana.titulo}</h2>
-              {DIAS.filter((d) => filas.some((f) => f.dia === d)).map((dia) => (
-                <div key={dia} className="space-y-2">
-                  <h3 className="text-sm text-muted">
-                    {copy.dias[dia]}
-                    {dia === hoy && " · hoy"}
-                  </h3>
-                  {filas
-                    .filter((f) => f.dia === dia)
-                    .map((f, i) => (
-                      <TiltCard
-                        key={`${f.amigo.id}-${f.inicio}`}
-                        tipo={f.tipo === "largo" ? "largo" : "corto"}
-                        indice={i}
-                      >
-                        <p className="font-display font-semibold">
-                          {f.tipo === "largo" && f.tramoLibre
-                            ? copy.semana.largo(duracionHumana(f.tramoLibre.minutos), f.amigo.name)
-                            : copy.semana.corto(f.amigo.name)}
-                        </p>
-                        <p className="mt-1 text-sm">
-                          {f.tramoLibre
-                            ? `${f.tramoLibre.inicio}–${f.tramoLibre.fin}`
-                            : `${f.inicio}–${f.fin}`}{" "}
-                          · {f.sede.nombre}
-                        </p>
-                      </TiltCard>
-                    ))}
-                </div>
-              ))}
+              <SemanaPorDia dias={DIAS} filas={porDia} hoy={hoy} />
             </section>
           </>
         )}

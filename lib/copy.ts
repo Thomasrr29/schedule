@@ -30,8 +30,19 @@ export const copy = {
     sinHorarioSub: "Sin él no hay con quién cruzarte",
     sinAmigos: "Todavía no tenés parceros acá. Invitá a alguien",
     sinNada: "Esta semana no se cruzan con nadie. Parche muerto",
-    largo: (dur: string, nombre: string) => `Tenés ${dur} con ${nombre}, parchen pues`,
-    corto: (nombre: string) => `Te cruzás con ${nombre}, saludá al menos`,
+    sinNadaDia: "Nadie cae este día",
+    // La app responde "quién está en la U y a quién le escribo", no "cuánto
+    // tiempo libre te queda". Por eso la tarjeta abre diciendo dónde está el
+    // otro y a qué horas, y cierra invitando. Nada de anunciar una duración:
+    // "tenés 30 minutos" suena a agenda y nadie sabe qué hacer con el dato.
+    // Una tarjeta por persona y por día: el nombre arriba, debajo cada franja
+    // en que cae, y el cierre invitando una sola vez. Agrupado se lee como
+    // "hoy Juanchito cae dos veces"; suelto parecen dos personas distintas.
+    franja: (desde: string, hasta: string, sede: string) =>
+      `${desde} a ${hasta} · ${sede}`,
+    coinciden: (desde: string, hasta: string) => `coinciden ${desde}–${hasta}`,
+    cierreLargo: "Podrían parchar un rato",
+    cierreCorto: "Podrías escribirle",
   },
   parceros: {
     titulo: "Tus parceros",
@@ -43,6 +54,10 @@ export const copy = {
     regenerar: "Cambiar el link",
     regenerarAviso: "¿Seguro? El link viejo deja de servir y toca mandar el nuevo",
     quitar: "Quitar",
+    // Quitar no cierra la puerta: el link sigue sirviendo. Decirlo acá evita
+    // que alguien crea que quitó a un parcero y quedó fuera.
+    quitarAviso: "¿Seguro? Si todavía tiene tu link puede volver a entrar",
+    mejorNo: "Mejor no",
   },
   invitacion: {
     invita: (nombre: string) => `${nombre} te quiere agregar`,
@@ -76,6 +91,11 @@ export const copy = {
   dias: {
     lun: "Lunes", mar: "Martes", mie: "Miércoles",
     jue: "Jueves", vie: "Viernes", sab: "Sábado",
+  },
+  // Para las pestañas: seis nombres completos no caben en el ancho de un teléfono.
+  diasCorto: {
+    lun: "Lun", mar: "Mar", mie: "Mié",
+    jue: "Jue", vie: "Vie", sab: "Sáb",
   },
   errores: {
     red: "Se cayó el internet. Intentá otra vez",

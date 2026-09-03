@@ -106,7 +106,10 @@ export function SubirHorario({ sedes }: { sedes: SedeRef[] }) {
             ref={input}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            capture="environment"
+            /* Sin `capture`: ese atributo abre la cámara de una y esconde la
+               galería, y el horario casi siempre ya es una captura de pantalla
+               guardada, no algo que se fotografíe en el momento. Sin él el
+               sistema muestra su selector, que igual ofrece tomar la foto. */
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];

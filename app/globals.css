@@ -22,3 +22,10 @@ body {
   /* La nav inferior es fija; sin esto el ultimo item queda debajo de ella. */
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* El día entra desde abajo al cambiar de pestaña. Corta y sin desplazamiento
+   lateral: el gesto ya movió la vista de lado, repetirlo aquí marea. */
+@keyframes entra {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

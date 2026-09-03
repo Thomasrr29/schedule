@@ -1,6 +1,11 @@
 /** Casos borde del motor de cruce. Corre sin base de datos: `npm run check`. */
 import assert from "node:assert/strict";
-import { calcularCoincidencias, coincidenciasEnCurso, type BloqueBase } from "@/lib/matching";
+import {
+  calcularCoincidencias,
+  coincidenciasEnCurso,
+  ventanasDePresencia,
+  type BloqueBase,
+} from "@/lib/matching";
 import { ahoraEnBogota, restarIntervalos } from "@/lib/time";
 import { partirAula, reconocerSede, type SedeConAlias } from "@/lib/aula";
 import { normalizarHora, parsearRango } from "@/lib/horas";
@@ -36,6 +41,53 @@ test("yo salgo 10:00 y el entra 10:00 -> se cruzan en la puerta (corto)", () => 
   assert.equal(r[0].tramoLibre, null); // uno de los dos siempre esta en clase
 });
 
+test("hueco corto entre clases -> sigue siendo una sola ventana", () => {
+  // 45 min entre clases: nadie se va a la casa por eso.
+  const v = ventanasDePresencia([clase("mar", "08:00", "10:00"), clase("mar", "10:45", "12:00")]);
+  assert.equal(v.length, 1);
+  assert.equal(v[0].inicio, 8 * 60 - 15);
+  assert.equal(v[0].fin, 12 * 60 + 30);
+});
+
+test("hueco largo entre clases -> dos ventanas, no una barra de 8 a 18", () => {
+  const v = ventanasDePresencia([clase("mar", "08:00", "10:00"), clase("mar", "16:00", "18:00")]);
+  assert.equal(v.length, 2);
+  assert.equal(v[0].fin, 10 * 60 + 30); // se fue despues de la primera
+  assert.equal(v[1].inicio, 16 * 60 - 15); // volvio para la segunda
+});
+
+test("el hueco de otro no genera encuentro falso", () => {
+  // El clasico: el tiene clase temprano y en la tarde, yo voy a mediodia.
+  const r = calcularCoincidencias(
+    [clase("mar", "12:00", "14:00")],
+    [clase("mar", "08:00", "10:00"), clase("mar", "16:00", "18:00")],
+  );
+  assert.equal(r.length, 0);
+});
+
+test("un DISPONIBLE en el hueco vuelve a unir las dos ventanas", () => {
+  // "Me quedo estudiando de 10 a 16": lo dijo el, ya no es suposicion.
+  const v = ventanasDePresencia([
+    clase("mar", "08:00", "10:00"),
+    clase("mar", "10:00", "16:00", "robledo", "DISPONIBLE"),
+    clase("mar", "16:00", "18:00"),
+  ]);
+  assert.equal(v.length, 1);
+  assert.equal(v[0].inicio, 8 * 60 - 15);
+  assert.equal(v[0].fin, 18 * 60 + 30);
+});
+
+test("clases solapadas no cortan la tanda por el fin del ultimo bloque", () => {
+  // La segunda termina antes que la primera; el corte debe medirse contra el
+  // fin mayor, no contra el del bloque que se ley al final.
+  const v = ventanasDePresencia([
+    clase("mar", "08:00", "13:00"),
+    clase("mar", "09:00", "10:00"),
+    clase("mar", "14:00", "15:00"),
+  ]);
+  assert.equal(v.length, 1); // 13:00 -> 14:00 es una hora, no pasa el umbral
+});
+
 test("sedes distintas a la misma hora -> nada", () => {
   const r = calcularCoincidencias(
     [clase("mar", "08:00", "10:00", "robledo")],
@@ -63,10 +115,37 @@ test("bloque DISPONIBLE no se resta -> encuentro largo", () => {
   assert.equal(r[0].tramoLibre?.minutos, 30); // 16:00 a 16:30, ya libre yo
 });
 
-test("hueco compartido de 2h entre clases -> largo", () => {
+test("hueco compartido largo -> no se asume que los dos se quedaron", () => {
+  // Antes esto daba un solo encuentro largo de 11:00 a 14:00, dando por hecho
+  // que ninguno se movio del campus en tres horas. Ahora son dos ratos cortos,
+  // uno por cada tanda de clases.
   const r = calcularCoincidencias(
     [clase("jue", "08:00", "10:00"), clase("jue", "14:00", "16:00")],
     [clase("jue", "09:00", "11:00"), clase("jue", "15:00", "17:00")],
+  );
+  assert.equal(r.length, 2);
+  assert.deepEqual(
+    r.map((c) => c.tipo),
+    ["corto", "corto"],
+  );
+  assert.equal(r[0].inicio, "08:45");
+  assert.equal(r[1].inicio, "14:45");
+});
+
+test("si los dos declaran que se quedan, vuelve el encuentro largo", () => {
+  // Mismo horario que el caso anterior, pero cada uno marco su parche fijo en
+  // el hueco. Ya no es una suposicion de la app: lo dijeron ellos.
+  const r = calcularCoincidencias(
+    [
+      clase("jue", "08:00", "10:00"),
+      clase("jue", "10:00", "14:00", "robledo", "DISPONIBLE"),
+      clase("jue", "14:00", "16:00"),
+    ],
+    [
+      clase("jue", "09:00", "11:00"),
+      clase("jue", "11:00", "15:00", "robledo", "DISPONIBLE"),
+      clase("jue", "15:00", "17:00"),
+    ],
   );
   assert.equal(r.length, 1);
   assert.equal(r[0].tipo, "largo");
