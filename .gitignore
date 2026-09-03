@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated
+
+# skills de referencia que instala `prisma init`
+/.agents/skills/
+/.claude/skills/
+/.windsurf/skills/
+/skills-lock.json
