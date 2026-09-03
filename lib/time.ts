@@ -81,3 +81,14 @@ export function duracionHumana(minutos: number): string {
   if (m === 0) return h === 1 ? "1 hora" : `${h} horas`;
   return `${h}h ${m}min`;
 }
+
+/** "YYYY-MM-DD" del día en Medellín. Para contadores diarios que no deben
+ *  reiniciarse a las 7pm, que es cuando cambia el día en UTC. */
+export function fechaHoyBogota(fecha: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: ZONA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(fecha);
+}

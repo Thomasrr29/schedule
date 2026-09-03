@@ -47,6 +47,12 @@ model User {
   intentosFallidos Int       @default(0)
   bloqueadoHasta   DateTime?
 
+  // Tope de fotos por día. Mismo criterio que el bloqueo: en la base y no en
+  // memoria, porque un Map no sobrevive a un redeploy ni a otra invocación.
+  // La fecha es "YYYY-MM-DD" en hora de Medellín para no hacer cuentas de UTC.
+  extraccionesFecha String?
+  extraccionesHoy   Int     @default(0)
+
   schedules    Schedule[]
   deviceTokens DeviceToken[]
   invitacion   Invitacion?

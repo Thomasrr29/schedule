@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
 import type { SedeRef } from "@/lib/sedes";
@@ -119,6 +120,15 @@ export function EditorHorario({ bloques, sedes }: { bloques: Bloque[]; sedes: Se
             ))}
           </section>
         ))
+      )}
+
+      {!abierto && (
+        <Link
+          href="/schedule/upload"
+          className="block h-14 w-full rounded-full border-2 border-ink bg-yellow text-center font-display font-semibold leading-[3.25rem]"
+        >
+          {copy.horario.vacio}
+        </Link>
       )}
 
       {!abierto && (

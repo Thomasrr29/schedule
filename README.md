@@ -34,6 +34,19 @@ No es como la v6. Tres cosas que rompen si se olvidan:
    con `@prisma/adapter-pg`. Sin adapter el cliente no arranca.
 3. **El cliente se genera en `lib/generated/prisma/`** y se importa de ahí, no de
    `@prisma/client`. Los tipos salen de `/client`, los enums de `/enums`.
+4. **Después de cualquier `prisma generate`, reiniciá `npm run dev`.** HMR no
+   recarga el cliente generado y el proceso viejo se queda con el esquema viejo.
+5. **El CLI migra por `DIRECT_URL`, no por el pooler.** PgBouncer en modo
+   transacción devuelve la conexión al pool sin soltar el advisory lock de la
+   migración, y el siguiente `migrate` se queda esperándolo para siempre. Si eso
+   pasa igual, la conexión colgada se ve así:
+
+   ```sql
+   select l.pid, a.state from pg_locks l
+   join pg_stat_activity a on a.pid = l.pid where l.locktype = 'advisory';
+   ```
+
+   y se suelta con `select pg_terminate_backend(<pid>)`.
 
 ## Mapa
 
@@ -42,6 +55,7 @@ lib/
   matching.ts       ventanas de presencia + solape + clasificación   <- el corazón
   coincidencias.ts  arma el cruce contra todos tus amigos, en una query
   aula.ts           parsea "N-310 FRATERNIDAD MEDELLÍN (MAÑANA)" -> aula + sede
+  horas.ts          parsea "8:0-9:59" -> 08:00 a 10:00
   sedes.ts          las sedes desde la base
   time.ts           intervalos en minutos, "ahora" en America/Bogota
   auth.ts           cookie de sesión, PIN, bloqueo por intentos
@@ -63,7 +77,14 @@ scripts/demo.ts             amiga de prueba
   son dos ventanas, no una de 8 a 16: entre las dos vas en camino.
 - **Nada se precalcula.** Con 20 bloques por persona cruzar en memoria es
   instantáneo, y si un amigo corrige su horario tu siguiente carga ya lo ve.
-- **La foto nunca se guarda**, solo los bloques que el usuario confirmó.
+- **La foto nunca se guarda**, solo los bloques que el usuario confirmó. Llega
+  en memoria, se manda en base64 y el buffer se descarta: no toca disco ni base.
+- **Al modelo solo se le pide transcribir.** Las celdas de Hora y Aula vienen
+  literales y las parsea código probado. El ITM escribe `8:0-9:59` queriendo
+  decir "de 8 a 10", y mete la sede adentro del aula — eso son reglas, no
+  criterio, y el prompt no es el lugar para reglas.
+- **Resubir la foto conserva los bloques manuales.** Solo se reemplazan los de
+  `origen: "foto"`, para no borrarte la clase de bachata.
 - **Las sedes son una tabla, no un enum.** Agregar una es insertar una fila, no
   una migración y un deploy. Y `alias` existe porque en el horario del ITM la
   sede viene embebida en texto libre y no siempre escrita igual.

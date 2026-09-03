@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Dia } from "@/lib/generated/prisma/enums";
 import { partirAula, reconocerSede, type SedeConAlias, type SedeRef } from "@/lib/aula";
+import { parsearRango } from "@/lib/horas";
 
 // El ID va sin sufijo de fecha: "claude-haiku-4-5-20251001" da 400.
 // Cambiar esta linea a "claude-opus-5" es todo lo que hace falta si las fotos
@@ -8,7 +9,6 @@ import { partirAula, reconocerSede, type SedeConAlias, type SedeRef } from "@/li
 const MODELO = "claude-haiku-4-5";
 
 const DIAS = ["lun", "mar", "mie", "jue", "vie", "sab"] as const;
-const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
@@ -22,21 +22,19 @@ export type BloqueExtraido = {
   horaFin: string;
   aula: string | null;
   sede: SedeRef | null;
-  celdaAula: string;
 };
 
 const anthropic = new Anthropic();
 
 /**
- * La celda de "Aula" del ITM trae todo junto: "N-310 FRATERNIDAD MEDELLÍN
- * (MAÑANA)". Le pedimos al modelo que la copie tal cual en vez de clasificar
- * la sede: transcribir es lo que hace bien, y asi agregar una sede nueva es
- * insertar una fila y no reescribir el prompt.
+ * Al modelo solo se le pide transcribir: las celdas de Hora y Aula vienen
+ * literales y las parsea codigo probado. Clasificar la sede o normalizar
+ * "8:0-9:59" desde el prompt seria pedirle criterio donde ya hay reglas.
  */
 const tools: Anthropic.Tool[] = [
   {
     name: "guardar_bloques_horario",
-    description: "Registra los bloques de clase detectados en la imagen",
+    description: "Registra los bloques de clase detectados en la tabla de horario",
     input_schema: {
       type: "object",
       properties: {
@@ -45,16 +43,12 @@ const tools: Anthropic.Tool[] = [
           items: {
             type: "object",
             properties: {
-              titulo: { type: "string", description: "Nombre de la materia" },
+              titulo: { type: "string", description: "Nombre de la asignatura" },
               dia: { type: "string", enum: [...DIAS] },
-              hora_inicio: { type: "string", description: "HH:MM en 24 horas" },
-              hora_fin: { type: "string", description: "HH:MM en 24 horas" },
-              aula: {
-                type: "string",
-                description: "La celda de Aula copiada literalmente, con el código, la sede y lo que venga entre paréntesis",
-              },
+              hora: { type: "string", description: "La celda Hora copiada literal, ej '8:0-9:59'" },
+              aula: { type: "string", description: "La celda Aula copiada literal, ej 'N-310 FRATERNIDAD MEDELLIN (MAÑANA)'" },
             },
-            required: ["titulo", "dia", "hora_inicio", "hora_fin"],
+            required: ["titulo", "dia", "hora"],
           },
         },
       },
@@ -62,6 +56,18 @@ const tools: Anthropic.Tool[] = [
     },
   },
 ];
+
+const INSTRUCCIONES = `Esta es una tabla de horario universitario del ITM. Cada fila de la columna Día es un bloque de clase distinto.
+
+CELDAS COMBINADAS: cuando una asignatura tiene clase varios días, su nombre aparece UNA sola vez y las filas siguientes lo tienen vacío. Repetí el nombre de la asignatura en cada bloque que le corresponda. Una tabla con 5 asignaturas puede tener 8 bloques.
+
+Para cada bloque:
+- titulo: el nombre de la asignatura
+- dia: el día de la columna Día, como lun/mar/mie/jue/vie/sab
+- hora: la celda Hora copiada literalmente, sin normalizar ni corregir
+- aula: la celda Aula copiada literalmente, con el código, la sede y lo que venga entre paréntesis
+
+Ignorá las columnas Grupo, Int. y Período. No extraigas el nombre ni el correo del profesor.`;
 
 export async function extraerHorario(
   imagenBase64: string,
@@ -79,13 +85,7 @@ export async function extraerHorario(
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: imagenBase64 } },
-          {
-            type: "text",
-            text:
-              "Extrae todos los bloques de clase de esta imagen de horario universitario del ITM. " +
-              "Las horas vienen como rango (ej '8:0-9:59'): normalizalas a HH:MM de 24 horas. " +
-              "El campo aula copialo literal de la celda, sin interpretarlo ni abreviarlo.",
-          },
+          { type: "text", text: INSTRUCCIONES },
         ],
       },
     ],
@@ -108,16 +108,26 @@ function normalizar(crudo: unknown, sedes: SedeConAlias[]): BloqueExtraido | nul
 
   const titulo = typeof b.titulo === "string" ? b.titulo.trim() : "";
   const dia = b.dia as Dia;
-  const horaInicio = String(b.hora_inicio ?? "");
-  const horaFin = String(b.hora_fin ?? "");
+  if (!titulo || !DIAS.includes(dia)) return null;
 
-  if (!titulo) return null;
-  if (!DIAS.includes(dia)) return null;
-  if (!HORA.test(horaInicio) || !HORA.test(horaFin)) return null;
-  if (horaFin <= horaInicio) return null; // "HH:MM" con cero a la izquierda ordena bien como string
+  const rango = parsearRango(typeof b.hora === "string" ? b.hora : "");
+  if (!rango) return null;
 
-  const celdaAula = typeof b.aula === "string" ? b.aula.trim() : "";
-  const { aula, resto } = partirAula(celdaAula);
+  const { aula, resto } = partirAula(typeof b.aula === "string" ? b.aula.trim() : "");
 
-  return { titulo, dia, horaInicio, horaFin, aula, sede: reconocerSede(resto, sedes), celdaAula };
+  return {
+    titulo,
+    dia,
+    horaInicio: rango.inicio,
+    horaFin: rango.fin,
+    aula,
+    sede: reconocerSede(resto, sedes),
+  };
+}
+
+/** Una clave sin poner da un 401 enterrado en los logs y encima gasta cupo.
+ *  Mejor atajarlo antes de llamar. */
+export function claveConfigurada(): boolean {
+  const k = process.env.ANTHROPIC_API_KEY ?? "";
+  return k.startsWith("sk-ant-") && k.length > 30;
 }

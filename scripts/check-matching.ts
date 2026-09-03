@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { calcularCoincidencias, coincidenciasEnCurso, type BloqueBase } from "@/lib/matching";
 import { ahoraEnBogota, restarIntervalos } from "@/lib/time";
 import { partirAula, reconocerSede, type SedeConAlias } from "@/lib/aula";
+import { normalizarHora, parsearRango } from "@/lib/horas";
 
 const clase = (
   dia: BloqueBase["dia"],
@@ -163,6 +164,35 @@ test("celda sin codigo de aula", () => {
   const r = partirAula("CATA (MANANA)");
   assert.equal(r.aula, null);
   assert.equal(reconocerSede(r.resto, SEDES)?.id, "cata");
+});
+
+console.log("");
+console.log("horas del horario del ITM");
+console.log("");
+
+test("celdas reales: 8:0-9:59 es de 8 a 10", () => {
+  assert.deepEqual(parsearRango("8:0-9:59"), { inicio: "08:00", fin: "10:00" });
+  assert.deepEqual(parsearRango("18:0-19:59"), { inicio: "18:00", fin: "20:00" });
+  assert.deepEqual(parsearRango("6:0-7:59"), { inicio: "06:00", fin: "08:00" });
+  assert.deepEqual(parsearRango("10:0-11:59"), { inicio: "10:00", fin: "12:00" });
+});
+
+test("sin cero a la izquierda, que es como viene", () => {
+  assert.equal(normalizarHora("8:0"), "08:00");
+  assert.equal(normalizarHora("6:5"), "06:05");
+  assert.equal(normalizarHora("18:0"), "18:00");
+});
+
+test("un fin que no termina en :59 se respeta tal cual", () => {
+  assert.deepEqual(parsearRango("8:00-10:00"), { inicio: "08:00", fin: "10:00" });
+  assert.deepEqual(parsearRango("14:00-15:30"), { inicio: "14:00", fin: "15:30" });
+});
+
+test("basura no pasa", () => {
+  assert.equal(parsearRango("25:00-26:00"), null);
+  assert.equal(parsearRango("8:0"), null);
+  assert.equal(parsearRango("10:0-9:0"), null); // fin antes que inicio
+  assert.equal(normalizarHora("ocho"), null);
 });
 
 console.log(`\n${pasaron} casos, ${process.exitCode ? "con fallos" : "todos bien"}\n`);
