@@ -23,6 +23,23 @@ export const copy = {
     carnetMalo: "Ese carnet no parece un carnet",
     nombreVacio: "Escribí tu nombre",
   },
+  horario: {
+    titulo: "Tu horario",
+    vacio: "Tirale una foto a tu horario",
+    vacioManual: "Todavía no tenés bloques. Añadí el primero",
+    añadir: "Añadir parche fijo",
+    guardado: "Listo pues, horario guardado",
+    ocupado: "Estoy en algo",
+    disponible: "Estoy por allá, libre",
+    sede: "¿Robledo o Fraternidad?",
+    borrar: "Borrar",
+    cancelar: "Cancelar",
+  },
+  dias: {
+    lun: "Lunes", mar: "Martes", mie: "Miércoles",
+    jue: "Jueves", vie: "Viernes", sab: "Sábado",
+  },
+  sedes: { ROBLEDO: "Robledo", FRATERNIDAD: "Fraternidad" },
   errores: {
     red: "Se cayó el internet. Intentá otra vez",
     servidor: "Algo se rompió. Intentá en un ratico",
