@@ -56,7 +56,7 @@ export default async function Home() {
                 {ahora.map((f, i) => (
                   <TiltCard key={`${f.amigo.id}-${f.inicio}`} tipo="largo" indice={i}>
                     <p className="font-display text-xl font-semibold">
-                      {f.amigo.name} está en {copy.sedes[f.sede]}
+                      {f.amigo.name} está en {f.sede.nombre}
                     </p>
                     <p className="mt-1 text-sm">Hasta las {f.fin}</p>
                   </TiltCard>
@@ -89,7 +89,7 @@ export default async function Home() {
                           {f.tramoLibre
                             ? `${f.tramoLibre.inicio}–${f.tramoLibre.fin}`
                             : `${f.inicio}–${f.fin}`}{" "}
-                          · {copy.sedes[f.sede]}
+                          · {f.sede.nombre}
                         </p>
                       </TiltCard>
                     ))}

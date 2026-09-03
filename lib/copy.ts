@@ -49,7 +49,6 @@ export const copy = {
     lun: "Lunes", mar: "Martes", mie: "Miércoles",
     jue: "Jueves", vie: "Viernes", sab: "Sábado",
   },
-  sedes: { ROBLEDO: "Robledo", FRATERNIDAD: "Fraternidad" },
   errores: {
     red: "Se cayó el internet. Intentá otra vez",
     servidor: "Algo se rompió. Intentá en un ratico",

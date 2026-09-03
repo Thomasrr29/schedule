@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validarBloque } from "@/lib/validar";
+import { idsDeSedes } from "@/lib/sedes";
 
 /** Confirma que el bloque existe y es del que pregunta. Sin esto, cualquiera
  *  con un id podria editar el horario ajeno. */
@@ -19,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!(await delDueño(id, user.id))) return Response.json({ error: "no existe" }, { status: 404 });
 
-  const v = validarBloque(await req.json().catch(() => null));
+  const v = validarBloque(await req.json().catch(() => null), await idsDeSedes());
   if (!v.ok) return Response.json({ error: v.error }, { status: 400 });
 
   return Response.json({ bloque: await prisma.timeBlock.update({ where: { id }, data: v.bloque }) });

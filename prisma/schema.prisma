@@ -10,11 +10,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Sede {
-  ROBLEDO
-  FRATERNIDAD
-}
-
 enum Dia {
   lun
   mar
@@ -84,6 +79,19 @@ model Friendship {
   @@index([destinatarioId, status])
 }
 
+/// Las sedes son datos, no código: agregar una es insertar una fila, no una
+/// migración y un deploy. `alias` existe porque en el horario del ITM la sede
+/// viene embebida en texto libre ("N-310 FRATERNIDAD MEDELLÍN (MAÑANA)") y no
+/// siempre escrita igual.
+model Sede {
+  id     String   @id // slug: "robledo"
+  nombre String   @unique // "Robledo" — lo que se muestra
+  alias  String[] // formas en que aparece escrita en el horario
+  orden  Int      @default(0) // para que el dropdown salga siempre igual
+
+  bloques TimeBlock[]
+}
+
 model Schedule {
   id        String   @id @default(uuid())
   userId    String
@@ -105,9 +113,11 @@ model TimeBlock {
   dia        Dia
   horaInicio String // "HH:MM" 24h, siempre con cero a la izquierda
   horaFin    String // "HH:MM" 24h
-  sede       Sede
+  sedeId     String
+  sede       Sede         @relation(fields: [sedeId], references: [id])
+  aula       String? // "C-308" — dónde exactamente, no solo en qué sede
   tipo       TipoBloque   @default(OCUPADO)
   origen     OrigenBloque @default(foto) // para no rehacer los manuales al resubir
 
-  @@index([scheduleId, dia, sede])
+  @@index([scheduleId, dia, sedeId])
 }

@@ -11,6 +11,7 @@ Stack: Next.js 16 (App Router) · Prisma 7 + PostgreSQL · Tailwind v4 · Claude
 npm install
 cp .env.example .env      # y llenar DATABASE_URL + ANTHROPIC_API_KEY
 npx prisma migrate dev --name init
+npx prisma db seed          # las sedes
 npm run dev
 ```
 
@@ -19,6 +20,7 @@ npm run dev
 | `npm run dev` | Servidor en http://localhost:3000 |
 | `npm run check` | Casos borde del motor de cruce, sin base de datos |
 | `npx prisma migrate dev` | Aplica cambios del schema |
+| `npx prisma db seed` | Siembra las sedes (Robledo, Fraternidad, CATA, Floresta) |
 | `npx prisma studio` | Ver y editar la base a mano (aquí se resetean PINs) |
 | `npx tsx --env-file=.env scripts/demo.ts <carnet>` | Siembra una amiga de prueba con horario que cruza con el tuyo (`--limpiar` la borra) |
 
@@ -39,6 +41,8 @@ No es como la v6. Tres cosas que rompen si se olvidan:
 lib/
   matching.ts       ventanas de presencia + solape + clasificación   <- el corazón
   coincidencias.ts  arma el cruce contra todos tus amigos, en una query
+  aula.ts           parsea "N-310 FRATERNIDAD MEDELLÍN (MAÑANA)" -> aula + sede
+  sedes.ts          las sedes desde la base
   time.ts           intervalos en minutos, "ahora" en America/Bogota
   auth.ts           cookie de sesión, PIN, bloqueo por intentos
   validar.ts        lo único por donde entra un bloque a la base
@@ -60,6 +64,14 @@ scripts/demo.ts             amiga de prueba
 - **Nada se precalcula.** Con 20 bloques por persona cruzar en memoria es
   instantáneo, y si un amigo corrige su horario tu siguiente carga ya lo ve.
 - **La foto nunca se guarda**, solo los bloques que el usuario confirmó.
+- **Las sedes son una tabla, no un enum.** Agregar una es insertar una fila, no
+  una migración y un deploy. Y `alias` existe porque en el horario del ITM la
+  sede viene embebida en texto libre y no siempre escrita igual.
+- **La jornada (MAÑANA/NOCHE) se descarta.** La hora del bloque ya la dice, y
+  guardarla sería un dato duplicado que se puede contradecir.
+- **El formulario no trae sede por defecto.** Una sede equivocada no produce un
+  encuentro falso: produce uno que falta, y eso no se nota nunca. Desde el
+  segundo bloque sugiere la que ya venís usando.
 - **El dashboard es la semana, no el ahora.** Sin notificaciones, una vista de
   "quién está ahora" obliga a abrir la app en el momento justo. La semana se
   consulta una vez y sirve; el "ahora mismo" es una sección adentro.

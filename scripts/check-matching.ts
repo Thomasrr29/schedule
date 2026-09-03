@@ -2,14 +2,15 @@
 import assert from "node:assert/strict";
 import { calcularCoincidencias, coincidenciasEnCurso, type BloqueBase } from "@/lib/matching";
 import { ahoraEnBogota, restarIntervalos } from "@/lib/time";
+import { partirAula, reconocerSede, type SedeConAlias } from "@/lib/aula";
 
 const clase = (
   dia: BloqueBase["dia"],
   horaInicio: string,
   horaFin: string,
-  sede: BloqueBase["sede"] = "ROBLEDO",
+  sedeId = "robledo",
   tipo: BloqueBase["tipo"] = "OCUPADO",
-): BloqueBase => ({ titulo: "x", dia, horaInicio, horaFin, sede, tipo });
+): BloqueBase => ({ titulo: "x", dia, horaInicio, horaFin, sedeId, sedeNombre: sedeId, tipo });
 
 let pasaron = 0;
 const test = (nombre: string, fn: () => void) => {
@@ -36,15 +37,15 @@ test("yo salgo 10:00 y el entra 10:00 -> se cruzan en la puerta (corto)", () => 
 
 test("sedes distintas a la misma hora -> nada", () => {
   const r = calcularCoincidencias(
-    [clase("mar", "08:00", "10:00", "ROBLEDO")],
-    [clase("mar", "08:00", "10:00", "FRATERNIDAD")],
+    [clase("mar", "08:00", "10:00", "robledo")],
+    [clase("mar", "08:00", "10:00", "fraternidad")],
   );
   assert.equal(r.length, 0);
 });
 
 test("robledo 8-10 + fraternidad 14-16 no es una ventana de 8 a 16", () => {
-  const mios = [clase("mar", "08:00", "10:00", "ROBLEDO"), clase("mar", "14:00", "16:00", "FRATERNIDAD")];
-  const r = calcularCoincidencias(mios, [clase("mar", "11:00", "13:00", "ROBLEDO")]);
+  const mios = [clase("mar", "08:00", "10:00", "robledo"), clase("mar", "14:00", "16:00", "fraternidad")];
+  const r = calcularCoincidencias(mios, [clase("mar", "11:00", "13:00", "robledo")]);
   assert.equal(r.length, 0); // a las 12 yo voy en camino, no en el campus
 });
 
@@ -54,7 +55,7 @@ test("me voy 15 min antes de que llegue -> no alcanza", () => {
 });
 
 test("bloque DISPONIBLE no se resta -> encuentro largo", () => {
-  const suyos = [clase("mie", "12:00", "16:00", "ROBLEDO", "DISPONIBLE")];
+  const suyos = [clase("mie", "12:00", "16:00", "robledo", "DISPONIBLE")];
   const r = calcularCoincidencias([clase("mie", "14:00", "16:00")], suyos);
   assert.equal(r.length, 1);
   assert.equal(r[0].tipo, "largo");
@@ -113,7 +114,7 @@ test("domingo no es dia de U", () => {
 
 test("ahora solo deja lo que esta pasando en este momento", () => {
   const c = calcularCoincidencias(
-    [clase("mie", "12:00", "16:00", "ROBLEDO", "DISPONIBLE")],
+    [clase("mie", "12:00", "16:00", "robledo", "DISPONIBLE")],
     [clase("mie", "14:00", "16:00")],
   );
   assert.equal(c.length, 1); // ventana 13:45-16:30
@@ -122,6 +123,46 @@ test("ahora solo deja lo que esta pasando en este momento", () => {
   assert.equal(coincidenciasEnCurso(c, "mie", 16 * 60 + 30).length, 0); // el fin no cuenta
   assert.equal(coincidenciasEnCurso(c, "jue", 14 * 60).length, 0); // otro dia
   assert.equal(coincidenciasEnCurso(c, null, 14 * 60).length, 0); // domingo
+});
+
+console.log("");
+console.log("sedes y aulas");
+console.log("");
+
+// Las mismas cuatro que siembra prisma/seed.ts.
+const SEDES: SedeConAlias[] = [
+  { id: "robledo", nombre: "Robledo", alias: ["ROBLEDO"] },
+  { id: "fraternidad", nombre: "Fraternidad", alias: ["FRATERNIDAD"] },
+  { id: "cata", nombre: "CATA", alias: ["CATA"] },
+  { id: "floresta", nombre: "Floresta", alias: ["FLORESTA", "LA FLORESTA"] },
+];
+
+test("celda real del ITM: saca el aula y la sede, y bota la jornada", () => {
+  const r = partirAula("N-310 FRATERNIDAD MEDELLIN (MANANA)");
+  assert.equal(r.aula, "N-310");
+  assert.equal(reconocerSede(r.resto, SEDES)?.id, "fraternidad");
+});
+
+test("el sufijo de ciudad no estorba", () => {
+  const r = partirAula("C-308 ROBLEDO (NOCHE)");
+  assert.equal(r.aula, "C-308");
+  assert.equal(reconocerSede(r.resto, SEDES)?.id, "robledo");
+});
+
+test("tildes y minusculas dan igual", () => {
+  assert.equal(reconocerSede("la floresta medellin", SEDES)?.id, "floresta");
+  assert.equal(reconocerSede("FLORESTA", SEDES)?.id, "floresta");
+});
+
+test("una sede que no conocemos no se inventa", () => {
+  assert.equal(reconocerSede("BELLO", SEDES), null);
+  assert.equal(reconocerSede("", SEDES), null);
+});
+
+test("celda sin codigo de aula", () => {
+  const r = partirAula("CATA (MANANA)");
+  assert.equal(r.aula, null);
+  assert.equal(reconocerSede(r.resto, SEDES)?.id, "cata");
 });
 
 console.log(`\n${pasaron} casos, ${process.exitCode ? "con fallos" : "todos bien"}\n`);

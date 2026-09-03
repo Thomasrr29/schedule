@@ -1,4 +1,4 @@
-import type { Dia, Sede, TipoBloque } from "@/lib/generated/prisma/enums";
+import type { Dia, TipoBloque } from "@/lib/generated/prisma/enums";
 import {
   MARGEN_LLEGADA,
   MARGEN_SALIDA,
@@ -21,19 +21,21 @@ export type BloqueBase = {
   dia: Dia;
   horaInicio: string; // "HH:MM"
   horaFin: string;
-  sede: Sede;
+  sedeId: string;
+  sedeNombre: string;
   tipo: TipoBloque;
 };
 
 export type Ventana = Intervalo & {
   dia: Dia;
-  sede: Sede;
+  sedeId: string;
+  sedeNombre: string;
   bloques: BloqueBase[];
 };
 
 export type Coincidencia = {
   dia: Dia;
-  sede: Sede;
+  sede: { id: string; nombre: string };
   inicio: string; // "HH:MM"
   fin: string;
   tipo: "largo" | "corto";
@@ -51,7 +53,7 @@ export function ventanasDePresencia(bloques: BloqueBase[]): Ventana[] {
   const grupos = new Map<string, BloqueBase[]>();
 
   for (const b of bloques) {
-    const clave = `${b.dia}|${b.sede}`;
+    const clave = `${b.dia}|${b.sedeId}`;
     const actual = grupos.get(clave);
     if (actual) actual.push(b);
     else grupos.set(clave, [b]);
@@ -62,7 +64,8 @@ export function ventanasDePresencia(bloques: BloqueBase[]): Ventana[] {
     const fines = grupo.map((b) => aMinutos(b.horaFin));
     return {
       dia: grupo[0].dia,
-      sede: grupo[0].sede,
+      sedeId: grupo[0].sedeId,
+      sedeNombre: grupo[0].sedeNombre,
       inicio: Math.min(...inicios) - MARGEN_LLEGADA,
       fin: Math.max(...fines) + MARGEN_SALIDA,
       bloques: grupo,
@@ -85,7 +88,7 @@ export function calcularCoincidencias(
   for (const va of misVentanas) {
     for (const vb of susVentanas) {
       // Cruzar sedes nunca genera encuentro, ni el mismo dia a la misma hora.
-      if (va.dia !== vb.dia || va.sede !== vb.sede) continue;
+      if (va.dia !== vb.dia || va.sedeId !== vb.sedeId) continue;
 
       const solape = seSolapan(va, vb);
       if (!solape || duracion(solape) < MIN_SOLAPE) continue;
@@ -106,7 +109,7 @@ export function calcularCoincidencias(
 
       resultado.push({
         dia: va.dia,
-        sede: va.sede,
+        sede: { id: va.sedeId, nombre: va.sedeNombre },
         inicio: aHHMM(solape.inicio),
         fin: aHHMM(solape.fin),
         tipo: esLargo ? "largo" : "corto",

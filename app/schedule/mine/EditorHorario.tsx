@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
-import type { Dia, Sede, TipoBloque } from "@/lib/generated/prisma/enums";
+import type { SedeRef } from "@/lib/sedes";
+import type { Dia, TipoBloque } from "@/lib/generated/prisma/enums";
 
 export type Bloque = {
   id: string;
@@ -11,15 +12,13 @@ export type Bloque = {
   dia: Dia;
   horaInicio: string;
   horaFin: string;
-  sede: Sede;
+  sedeId: string;
+  sede: { nombre: string };
+  aula: string | null;
   tipo: TipoBloque;
 };
 
 const DIAS = ["lun", "mar", "mie", "jue", "vie", "sab"] as const;
-const VACIO = {
-  titulo: "", dia: "lun" as Dia, horaInicio: "08:00", horaFin: "10:00",
-  sede: "ROBLEDO" as Sede, tipo: "OCUPADO" as TipoBloque,
-};
 
 // Un color por día para que la lista se lea como calendario y no como tabla.
 const COLOR_DIA: Record<Dia, string> = {
@@ -27,15 +26,32 @@ const COLOR_DIA: Record<Dia, string> = {
   jue: "bg-yellow", vie: "bg-mint", sab: "bg-lavender",
 };
 
-export function EditorHorario({ bloques }: { bloques: Bloque[] }) {
+/** La sede que más usás. Casi todo el mundo vive en una sola. */
+function sedeHabitual(bloques: Bloque[]): string {
+  const cuenta = new Map<string, number>();
+  for (const b of bloques) cuenta.set(b.sedeId, (cuenta.get(b.sedeId) ?? 0) + 1);
+  return [...cuenta.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+}
+
+export function EditorHorario({ bloques, sedes }: { bloques: Bloque[]; sedes: SedeRef[] }) {
   const router = useRouter();
-  const [form, setForm] = useState<typeof VACIO>(VACIO);
+  const habitual = sedeHabitual(bloques);
+
+  const vacio = {
+    titulo: "", dia: "lun" as Dia, horaInicio: "08:00", horaFin: "10:00",
+    // Sin default en el primer bloque: una sede equivocada no da un encuentro
+    // falso, da uno que falta — y eso no se nota nunca. Desde el segundo, la
+    // que ya venís usando.
+    sedeId: habitual, aula: "", tipo: "OCUPADO" as TipoBloque,
+  };
+
+  const [form, setForm] = useState(vacio);
   const [editando, setEditando] = useState<string | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const cerrar = () => { setAbierto(false); setEditando(null); setForm(VACIO); setError(null); };
+  const cerrar = () => { setAbierto(false); setEditando(null); setForm(vacio); setError(null); };
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
@@ -68,7 +84,10 @@ export function EditorHorario({ bloques }: { bloques: Bloque[] }) {
   }
 
   const editar = (b: Bloque) => {
-    setForm({ titulo: b.titulo, dia: b.dia, horaInicio: b.horaInicio, horaFin: b.horaFin, sede: b.sede, tipo: b.tipo });
+    setForm({
+      titulo: b.titulo, dia: b.dia, horaInicio: b.horaInicio, horaFin: b.horaFin,
+      sedeId: b.sedeId, aula: b.aula ?? "", tipo: b.tipo,
+    });
     setEditando(b.id);
     setAbierto(true);
   };
@@ -93,7 +112,7 @@ export function EditorHorario({ bloques }: { bloques: Bloque[] }) {
               >
                 <p className="font-display font-semibold">{b.titulo}</p>
                 <p className="text-sm">
-                  {b.horaInicio}–{b.horaFin} · {copy.sedes[b.sede]}
+                  {b.horaInicio}–{b.horaFin} · {b.aula ? `${b.aula} · ` : ""}{b.sede.nombre}
                   {b.tipo === "DISPONIBLE" && " · libre"}
                 </p>
               </button>
@@ -130,15 +149,25 @@ export function EditorHorario({ bloques }: { bloques: Bloque[] }) {
             <input type="time" value={form.horaFin} onChange={(e) => setForm({ ...form, horaFin: e.target.value })} className={campo} />
           </div>
 
-          <select
-            value={form.sede}
-            onChange={(e) => setForm({ ...form, sede: e.target.value as Sede })}
-            aria-label={copy.horario.sede}
-            className={campo}
-          >
-            <option value="ROBLEDO">Robledo</option>
-            <option value="FRATERNIDAD">Fraternidad</option>
-          </select>
+          <div className="flex gap-3">
+            <select
+              required
+              value={form.sedeId}
+              onChange={(e) => setForm({ ...form, sedeId: e.target.value })}
+              aria-label={copy.horario.sede}
+              className={campo}
+            >
+              <option value="" disabled>{copy.horario.sede}</option>
+              {sedes.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+            </select>
+            <input
+              placeholder="Aula"
+              value={form.aula}
+              maxLength={20}
+              onChange={(e) => setForm({ ...form, aula: e.target.value })}
+              className={campo}
+            />
+          </div>
 
           {/* En lenguaje llano: "ocupado / disponible" no le dice nada a nadie. */}
           <div className="flex gap-2">

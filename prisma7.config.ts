@@ -5,7 +5,8 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts",
+    // --env-file porque Next carga .env solo, pero un script suelto no.
+    seed: "tsx --env-file=.env prisma/seed.ts",
   },
   datasource: {
     url: env("DATABASE_URL"),
