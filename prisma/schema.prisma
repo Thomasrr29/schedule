@@ -49,6 +49,7 @@ model User {
 
   schedules    Schedule[]
   deviceTokens DeviceToken[]
+  invitacion   Invitacion?
   amistadesEnviadas  Friendship[] @relation("Solicitante")
   amistadesRecibidas Friendship[] @relation("Destinatario")
 }
@@ -90,6 +91,17 @@ model Sede {
   orden  Int      @default(0) // para que el dropdown salga siempre igual
 
   bloques TimeBlock[]
+}
+
+/// Un link por persona, estable y reusable: se pega en el grupo de WhatsApp y
+/// listo. Con ~8 parceros que uno invita a mano, el flujo de solicitud y
+/// aceptación protege de una amenaza que no existe. Regenerar el código es la
+/// salida si el link se filtra.
+model Invitacion {
+  codigo    String   @id // corto y legible, sin caracteres confundibles
+  emisorId  String   @unique
+  emisor    User     @relation(fields: [emisorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Schedule {

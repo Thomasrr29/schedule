@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/", label: "Semana" },
   { href: "/schedule/mine", label: "Horario" },
+  { href: "/friends", label: "Parceros" },
 ];
 
 export function BottomNav() {

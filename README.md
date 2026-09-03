@@ -72,6 +72,12 @@ scripts/demo.ts             amiga de prueba
 - **El formulario no trae sede por defecto.** Una sede equivocada no produce un
   encuentro falso: produce uno que falta, y eso no se nota nunca. Desde el
   segundo bloque sugiere la que ya venís usando.
+- **Se entra por link, no por solicitud.** El flujo de buscar carnet y aceptar
+  protege de desconocidos, pero en esta app nadie te puede encontrar: no hay
+  directorio ni búsqueda por nombre. Protegía contra algo imposible, cobrando
+  el paso donde la gente se cae. El link es por persona, estable y regenerable.
+- **El link no crea la amistad al abrirlo**: primero mostrás quién invita y la
+  persona confirma. Es compartir tu horario, así que la decisión es explícita.
 - **El dashboard es la semana, no el ahora.** Sin notificaciones, una vista de
   "quién está ahora" obliga a abrir la app en el momento justo. La semana se
   consulta una vez y sirve; el "ahora mismo" es una sección adentro.
