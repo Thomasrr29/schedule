@@ -6,9 +6,15 @@ import { miCodigo } from "@/lib/invitaciones";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { Parceros } from "./Parceros";
 
-export default async function Amigos() {
+export default async function Amigos({
+  searchParams,
+}: {
+  searchParams: Promise<{ bienvenida?: string }>;
+}) {
   const user = await getSessionUser();
   if (!user) redirect("/entrar");
+
+  const { bienvenida } = await searchParams;
 
   const [codigo, filas, cabeceras] = await Promise.all([
     miCodigo(user.id),
@@ -36,7 +42,11 @@ export default async function Amigos() {
 
   return (
     <>
-      <Parceros link={`${protocolo}://${host}/i/${codigo}`} amigos={amigos} />
+      <Parceros
+        link={`${protocolo}://${host}/i/${codigo}`}
+        amigos={amigos}
+        bienvenida={bienvenida === "1"}
+      />
       <BottomNav />
     </>
   );

@@ -1,0 +1,14 @@
+Ilustraciones del arranque (las 4 pantallas de /entrar en adelante).
+
+  astronauta.jpeg   el astronauta del ITM   -> pasos 1 y 2 (carnet y PIN)
+  celular.jpeg      el celular con apps     -> paso 3 (subir el horario)
+  parceros.jpeg     los tres estudiantes    -> paso 4 (invitar parceros)
+
+Tienen fondo blanco, no transparente. Se pintan con `mix-blend-multiply` sobre
+el crema de la app, y por eso el blanco desaparece solo: no hay que recortarlas.
+
+Eso tambien quiere decir que solo funcionan sobre fondos claros. Si alguna vez
+van sobre un fondo oscuro hay que recortarlas de verdad y quitar el blend.
+
+Van a ancho completo en un bloque de 176px de alto, con `contain`, asi que
+cualquier proporcion sirve.

@@ -4,10 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { EncabezadoPaso } from "@/components/ui/EncabezadoPaso";
+import Link from "next/link";
 
 type Amigo = { id: string; amigo: { id: string; name: string } };
 
-export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
+export function Parceros({
+  link,
+  amigos,
+  bienvenida = false,
+}: {
+  link: string;
+  amigos: Amigo[];
+  bienvenida?: boolean;
+}) {
   const router = useRouter();
   const [copiado, setCopiado] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
@@ -51,7 +61,16 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
 
   return (
     <main className="mx-auto max-w-md space-y-5 p-6 pb-28">
-      <h1 className="font-display text-3xl font-semibold">{copy.parceros.titulo}</h1>
+      {bienvenida ? (
+        <EncabezadoPaso
+          arte="parceros"
+          paso={4}
+          titulo={copy.parceros.pasoTitulo}
+          porque={copy.parceros.pasoPorque}
+        />
+      ) : (
+        <h1 className="font-display text-3xl font-semibold">{copy.parceros.titulo}</h1>
+      )}
 
       <TiltCard tipo="corto" indice={0}>
         <p className="font-display font-semibold">{copy.parceros.tuLink}</p>
@@ -114,6 +133,15 @@ export function Parceros({ link, amigos }: { link: string; amigos: Amigo[] }) {
           ))
         )}
       </section>
+
+      {bienvenida && (
+        <Link
+          href="/"
+          className="flex h-14 w-full items-center justify-center rounded-full border-2 border-ink bg-ink font-display text-lg font-semibold text-cream"
+        >
+          {amigos.length > 0 ? copy.parceros.listo : copy.parceros.despues}
+        </Link>
+      )}
 
       <div className="space-y-2 pt-2">
         <button

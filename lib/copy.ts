@@ -22,6 +22,20 @@ export const copy = {
     pinCorto: "El PIN son 4 números",
     carnetMalo: "Ese carnet no parece un carnet",
     nombreVacio: "Escribí tu nombre",
+    // Cada paso dice que se pide y para que. Un carnet y un PIN sin explicacion
+    // se leen como un tramite; con el porque se leen como algo que te sirve.
+    pasoCarnet: "Tu carnet",
+    pasoCarnetPorque:
+      "El mismo del ITM. Es como te van a encontrar tus parceros cuando les pases tu link.",
+    pasoPin: "Inventate un PIN",
+    pasoPinPorque:
+      "Cuatro números para que solo vos entrés a tu cuenta. No es la contraseña del ITM: es tuyo y nuevo.",
+    pasoNombre: "¿Cómo te llamás?",
+    pasoNombrePorque: "Es lo que ven tus parceros cuando coinciden con vos.",
+    seguir: "Seguir",
+    atras: "Atrás",
+    crear: "Crear mi cuenta",
+    accion: "Entrar",
   },
   semana: {
     ahora: "Ahora mismo",
@@ -58,6 +72,11 @@ export const copy = {
     // que alguien crea que quitó a un parcero y quedó fuera.
     quitarAviso: "¿Seguro? Si todavía tiene tu link puede volver a entrar",
     mejorNo: "Mejor no",
+    pasoTitulo: "Invitá a tus parceros",
+    pasoPorque:
+      "Mandales tu link por el grupo. Solo vas a ver los horarios de quienes lo abran, y ellos el tuyo.",
+    listo: "Listo, ver mi semana",
+    despues: "Después los invito",
   },
   invitacion: {
     invita: (nombre: string) => `${nombre} te quiere agregar`,
@@ -81,6 +100,9 @@ export const copy = {
     descifrando: "Descifrando ese horario…",
     confirmar: "¿Quedó bien? Arreglá lo que esté raro",
     ilegible: "No se entiende la foto. Tomala otra vez con más luz",
+    pasoTitulo: "Subí tu horario",
+    pasoPorque:
+      "Una foto o captura del horario del ITM. De ahí sacamos tus clases para saber cuándo estás en la U.",
     faltanSedes: (n: number) =>
       n === 1 ? "Falta la sede de un bloque" : `Faltan las sedes de ${n} bloques`,
     guardarHorario: "Guardar horario",

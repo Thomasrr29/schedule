@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
+import { EncabezadoPaso } from "@/components/ui/EncabezadoPaso";
 import type { SedeRef } from "@/lib/aula";
 import type { Dia } from "@/lib/generated/prisma/enums";
 
@@ -19,7 +20,7 @@ type Editable = {
 
 type Etapa = "elegir" | "leyendo" | "revisando" | "guardando";
 
-export function SubirHorario({ sedes }: { sedes: SedeRef[] }) {
+export function SubirHorario({ sedes, bienvenida = false }: { sedes: SedeRef[]; bienvenida?: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [etapa, setEtapa] = useState<Etapa>("elegir");
@@ -76,7 +77,7 @@ export function SubirHorario({ sedes }: { sedes: SedeRef[] }) {
         setError((await r.json()).error ?? copy.errores.servidor);
         return setEtapa("revisando");
       }
-      router.push("/schedule/mine");
+      router.push(bienvenida ? "/friends?bienvenida=1" : "/schedule/mine");
       router.refresh();
     } catch {
       setError(copy.errores.red);
@@ -92,11 +93,20 @@ export function SubirHorario({ sedes }: { sedes: SedeRef[] }) {
 
   return (
     <main className="mx-auto max-w-md space-y-4 p-6 pb-28">
-      <h1 className="font-display text-3xl font-semibold">
-        {etapa === "revisando" || etapa === "guardando"
-          ? copy.horario.confirmar
-          : copy.horario.vacio}
-      </h1>
+      {bienvenida && etapa !== "revisando" && etapa !== "guardando" ? (
+        <EncabezadoPaso
+          arte="celular"
+          paso={3}
+          titulo={copy.horario.pasoTitulo}
+          porque={copy.horario.pasoPorque}
+        />
+      ) : (
+        <h1 className="font-display text-3xl font-semibold">
+          {etapa === "revisando" || etapa === "guardando"
+            ? copy.horario.confirmar
+            : copy.horario.vacio}
+        </h1>
+      )}
 
       {error && <p className="text-sm font-semibold">{error}</p>}
 
