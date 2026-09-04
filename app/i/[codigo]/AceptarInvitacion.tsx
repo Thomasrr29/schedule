@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
 import { TiltCard } from "@/components/ui/TiltCard";
 
-export function AceptarInvitacion({ codigo, nombre }: { codigo: string; nombre: string }) {
+export function AceptarInvitacion({
+  codigo,
+  nombre,
+  bienvenida = false,
+}: {
+  codigo: string;
+  nombre: string;
+  bienvenida?: boolean;
+}) {
   const router = useRouter();
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +29,9 @@ export function AceptarInvitacion({ codigo, nombre }: { codigo: string; nombre: 
       });
       const data = await r.json();
       if (data.estado === "listo" || data.estado === "ya_eran") {
-        router.push("/friends");
+        // Recién creada la cuenta la amistad ya existe, pero todavía no hay
+        // horario que cruzar: el arranque sigue donde iba.
+        router.push(bienvenida ? "/schedule/upload?bienvenida=1" : "/friends");
         router.refresh();
         return;
       }

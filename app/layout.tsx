@@ -14,9 +14,21 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+// El link se comparte por WhatsApp, asi que la vista previa ES la portada de
+// la app: es lo unico que ve alguien antes de decidir si entra. La imagen sale
+// de app/opengraph-image.jpeg por convencion de archivo — Next arma las
+// etiquetas con la URL absoluta y el tamaño, que es justo lo que WhatsApp
+// necesita y lo que una ruta relativa no le sirve.
 export const metadata: Metadata = {
   title: "¿Quién cayó?",
   description: "Mirá cuándo coincidís con tus parceros en la U",
+  openGraph: {
+    type: "website",
+    siteName: "¿Quién cayó?",
+    title: "¿Quién cayó?",
+    description: "Mirá cuándo coincidís con tus parceros en la U",
+    locale: "es_CO",
+  },
 };
 
 // La app se usa parada en un pasillo, con una mano. Es movil primero.

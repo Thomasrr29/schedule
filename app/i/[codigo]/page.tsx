@@ -6,8 +6,15 @@ import { copy } from "@/lib/copy";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { AceptarInvitacion } from "./AceptarInvitacion";
 
-export default async function Invitacion({ params }: { params: Promise<{ codigo: string }> }) {
+export default async function Invitacion({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ codigo: string }>;
+  searchParams: Promise<{ bienvenida?: string }>;
+}) {
   const { codigo } = await params;
+  const { bienvenida } = await searchParams;
   const user = await getSessionUser();
 
   // Sin sesión, primero entra o se crea la cuenta y después vuelve acá.
@@ -31,7 +38,11 @@ export default async function Invitacion({ params }: { params: Promise<{ codigo:
           <p className="font-display text-lg font-semibold">{copy.invitacion.vosMismo}</p>
         </TiltCard>
       ) : (
-        <AceptarInvitacion codigo={codigo} nombre={inv.emisor.name} />
+        <AceptarInvitacion
+          codigo={codigo}
+          nombre={inv.emisor.name}
+          bienvenida={bienvenida === "1"}
+        />
       )}
 
       <Link href="/" className="text-center text-sm underline">

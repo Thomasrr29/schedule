@@ -11,6 +11,7 @@ const SEDES = [
   { id: "fraternidad", nombre: "Fraternidad", orden: 2, alias: ["FRATERNIDAD"] },
   { id: "cata", nombre: "CATA", orden: 3, alias: ["CATA"] },
   { id: "floresta", nombre: "Floresta", orden: 4, alias: ["FLORESTA", "LA FLORESTA"] },
+  { id: "castilla", nombre: "Castilla", orden: 5, alias: ["CASTILLA"] },
 ];
 
 async function main() {

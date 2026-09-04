@@ -134,6 +134,10 @@ export function SubirHorario({ sedes, bienvenida = false }: { sedes: SedeRef[]; 
           >
             {etapa === "leyendo" ? copy.horario.descifrando : copy.horario.elegirFoto}
           </button>
+
+          {etapa === "elegir" && (
+            <p className="text-sm text-muted">{copy.horario.formato}</p>
+          )}
         </>
       )}
 

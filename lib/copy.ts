@@ -89,7 +89,7 @@ export const copy = {
   },
   horario: {
     titulo: "Tu horario",
-    vacio: "Tirale una foto a tu horario",
+    vacio: "Subí tu horario del SIA Web",
     vacioManual: "Todavía no tenés bloques. Añadí el primero",
     añadir: "Añadir parche fijo",
     guardado: "Listo pues, horario guardado",
@@ -99,10 +99,16 @@ export const copy = {
     elegirFoto: "Tomar o elegir la foto",
     descifrando: "Descifrando ese horario…",
     confirmar: "¿Quedó bien? Arreglá lo que esté raro",
-    ilegible: "No se entiende la foto. Tomala otra vez con más luz",
+    ilegible:
+      "No se entiende la foto. Tiene que verse la tabla del SIA Web completa, con día, hora y aula",
     pasoTitulo: "Subí tu horario",
     pasoPorque:
-      "Una foto o captura del horario del ITM. De ahí sacamos tus clases para saber cuándo estás en la U.",
+      "Una captura del horario como sale en el SIA Web. De ahí sacamos tus clases para saber cuándo estás en la U.",
+    // La IA lee la tabla del SIA Web, no un horario dibujado a mano ni una
+    // foto de la pantalla en diagonal. Decir qué columnas tienen que verse
+    // ahorra el viaje de subir algo que no se puede leer.
+    formato:
+      "Tiene que verse la tabla completa: Día, Hora (8:0-9:59) y Aula (N-310 FRATERNIDAD). Una captura de pantalla es lo más fácil.",
     faltanSedes: (n: number) =>
       n === 1 ? "Falta la sede de un bloque" : `Faltan las sedes de ${n} bloques`,
     guardarHorario: "Guardar horario",

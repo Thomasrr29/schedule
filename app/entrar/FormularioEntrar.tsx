@@ -55,8 +55,15 @@ export function FormularioEntrar({ destino }: { destino: string }) {
       // averiguar quién está registrado con solo probar números.
       if (data.needsName) return ir("nombre");
       if (data.ok) {
-        // Cuenta nueva: sigue el arranque. Si ya existía, va a lo suyo.
-        router.push(paso === "nombre" ? "/schedule/upload?bienvenida=1" : destino);
+        // Cuenta nueva: sigue el arranque, pero sin perder a dónde iba. Si llegó
+        // por el link de un parcero, ese link es el motivo por el que está acá:
+        // mandarlo derecho a subir el horario le come la invitación y se queda
+        // sin la conexión, que es justo lo que vino a hacer.
+        const arranque =
+          destino === "/"
+            ? "/schedule/upload?bienvenida=1"
+            : `${destino}${destino.includes("?") ? "&" : "?"}bienvenida=1`;
+        router.push(paso === "nombre" ? arranque : destino);
         router.refresh();
         return;
       }
