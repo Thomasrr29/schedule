@@ -29,3 +29,15 @@ body {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* El panel de un parcero sube desde el borde inferior, como una ficha de
+   contacto. El fondo se oscurece a la par para que se lea como una capa
+   encima y no como una pantalla nueva. */
+@keyframes sube {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes oscurece {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

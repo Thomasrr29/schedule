@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { EncabezadoPaso } from "@/components/ui/EncabezadoPaso";
 import Link from "next/link";
+import { HojaInferior } from "@/components/ui/HojaInferior";
+import { ListaHorario, type BloqueVista } from "@/components/ListaHorario";
 
-type Amigo = { id: string; amigo: { id: string; name: string } };
+type Amigo = { id: string; amigo: { id: string; name: string }; bloques: BloqueVista[] };
 
 export function Parceros({
   link,
@@ -25,6 +27,11 @@ export function Parceros({
   // Uno solo a la vez: abrir la confirmacion de otro cierra la anterior, asi
   // no quedan dos filas preguntando lo mismo.
   const [porQuitar, setPorQuitar] = useState<string | null>(null);
+  // Qué parcero tiene el horario abierto en el panel. Estable con useCallback
+  // para que el panel no vuelva a registrar sus listeners en cada render.
+  const [viendo, setViendo] = useState<string | null>(null);
+  const cerrarHorario = useCallback(() => setViendo(null), []);
+  const abierto = amigos.find((a) => a.id === viendo) ?? null;
 
   async function compartir() {
     // En el celular esto abre WhatsApp directo, que es donde va a terminar
@@ -96,7 +103,20 @@ export function Parceros({
               }`}
             >
               <div className="flex items-center gap-3">
-                <p className="flex-1 font-display font-semibold">{f.amigo.name}</p>
+                {/* El nombre también abre el horario: es lo que uno toca por
+                    instinto en cualquier lista de contactos. */}
+                <button
+                  onClick={() => setViendo(f.id)}
+                  className="min-w-0 flex-1 truncate text-left font-display font-semibold"
+                >
+                  {f.amigo.name}
+                </button>
+                <button
+                  onClick={() => setViendo(f.id)}
+                  className="rounded-full border-2 border-ink bg-cream px-3 py-1 text-xs"
+                >
+                  {copy.parceros.verHorario}
+                </button>
                 {porQuitar !== f.id && (
                   <button
                     onClick={() => setPorQuitar(f.id)}
@@ -157,6 +177,19 @@ export function Parceros({
           </button>
         )}
       </div>
+
+      <HojaInferior
+        abierta={abierto !== null}
+        titulo={abierto ? copy.parceros.horarioDe(abierto.amigo.name) : ""}
+        alCerrar={cerrarHorario}
+      >
+        {abierto &&
+          (abierto.bloques.length === 0 ? (
+            <p className="text-sm text-muted">{copy.parceros.sinHorario}</p>
+          ) : (
+            <ListaHorario bloques={abierto.bloques} />
+          ))}
+      </HojaInferior>
     </main>
   );
 }

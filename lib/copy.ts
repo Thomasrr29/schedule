@@ -77,6 +77,11 @@ export const copy = {
       "Mandales tu link por el grupo. Solo vas a ver los horarios de quienes lo abran, y ellos el tuyo.",
     listo: "Listo, ver mi semana",
     despues: "Después los invito",
+    // Ver el horario del otro es la razón de ser de la amistad; va en la fila,
+    // a un toque, y no escondido en un menú.
+    verHorario: "Horario",
+    horarioDe: (nombre: string) => `Horario de ${nombre}`,
+    sinHorario: "Todavía no ha subido su horario",
   },
   invitacion: {
     invita: (nombre: string) => `${nombre} te quiere agregar`,
@@ -124,6 +129,9 @@ export const copy = {
   diasCorto: {
     lun: "Lun", mar: "Mar", mie: "Mié",
     jue: "Jue", vie: "Vie", sab: "Sáb",
+  },
+  ui: {
+    cerrar: "Cerrar",
   },
   errores: {
     red: "Se cayó el internet. Intentá otra vez",

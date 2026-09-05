@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { copy } from "@/lib/copy";
 import type { SedeRef } from "@/lib/sedes";
+import { COLOR_DIA } from "@/components/ListaHorario";
 import type { Dia, TipoBloque } from "@/lib/generated/prisma/enums";
 
 export type Bloque = {
@@ -21,11 +22,6 @@ export type Bloque = {
 
 const DIAS = ["lun", "mar", "mie", "jue", "vie", "sab"] as const;
 
-// Un color por día para que la lista se lea como calendario y no como tabla.
-const COLOR_DIA: Record<Dia, string> = {
-  lun: "bg-yellow", mar: "bg-mint", mie: "bg-lavender",
-  jue: "bg-yellow", vie: "bg-mint", sab: "bg-lavender",
-};
 
 /** La sede que más usás. Casi todo el mundo vive en una sola. */
 function sedeHabitual(bloques: Bloque[]): string {
